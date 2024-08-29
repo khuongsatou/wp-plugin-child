@@ -1,0 +1,38 @@
+/* Default list view styles */
+.mtips5s-list-view .mtips5s-post-item {
+    display: block;
+    margin-bottom: 20px;
+}
+
+/* Grid view styles */
+.mtips5s-grid-view {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.mtips5s-grid-view .mtips5s-post-item {
+    width: 30%; /* Adjust this percentage as needed */
+    margin-right: 3.33%;
+    margin-bottom: 20px;
+}
+
+.mtips5s-grid-view .mtips5s-post-item:nth-child(3n) {
+    margin-right: 0;
+}
+
+/* Toggle button styles */
+.mtips5s-view-toggle {
+    margin-bottom: 20px;
+}
+
+.mtips5s-toggle {
+    cursor: pointer;
+    padding: 10px 20px;
+    margin-right: 10px;
+    background-color: #f4f4f4;
+    border: 1px solid #ccc;
+}
+
+.mtips5s-toggle:hover {
+    background-color: #ddd;
+}
