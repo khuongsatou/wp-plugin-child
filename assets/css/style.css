@@ -1,38 +1,140 @@
-/* Default list view styles */
-.mtips5s-list-view .mtips5s-post-item {
-    display: block;
-    margin-bottom: 20px;
-}
-
-/* Grid view styles */
-.mtips5s-grid-view {
+/* Tổng quan */
+.mtips5s-posts {
     display: flex;
     flex-wrap: wrap;
+    gap: 20px;
 }
 
+.mtips5s-post-item {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    padding: 15px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    background-color: #fff;
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.mtips5s-post-item:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    transform: translateY(-5px);
+}
+
+.mtips5s-post-item img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+
+.mtips5s-post-item h2 {
+    font-size: 1.5em;
+    margin: 0 0 10px;
+    color: #333;
+}
+
+.mtips5s-post-item p {
+    margin: 5px 0;
+    color: #666;
+}
+
+/* Chế độ xem danh sách */
+.mtips5s-list-view .mtips5s-post-item {
+    width: 100%;
+}
+
+.mtips5s-list-view .mtips5s-post-item img {
+    width: 100px;
+    height: 75px;
+    object-fit: cover;
+    margin-right: 15px;
+    float: left;
+}
+
+/* Chế độ xem lưới */
 .mtips5s-grid-view .mtips5s-post-item {
-    width: 30%; /* Adjust this percentage as needed */
-    margin-right: 3.33%;
+    width: calc(33.333% - 20px);
+}
+
+.mtips5s-grid-view .mtips5s-post-item img {
+    width: 100%;
+    height: auto;
+    margin: 0;
+}
+
+/* Form tìm kiếm */
+.mtips5s-search-form {
     margin-bottom: 20px;
 }
 
-.mtips5s-grid-view .mtips5s-post-item:nth-child(3n) {
-    margin-right: 0;
+.mtips5s-search-form form {
+    display: flex;
+    gap: 10px;
 }
 
-/* Toggle button styles */
+.mtips5s-search-form input[type="text"] {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.mtips5s-search-form button {
+    padding: 8px 16px;
+    background-color: #0073aa;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.mtips5s-search-form button:hover {
+    background-color: #005177;
+}
+
+/* Nút chuyển đổi chế độ xem */
 .mtips5s-view-toggle {
     margin-bottom: 20px;
 }
 
-.mtips5s-toggle {
-    cursor: pointer;
+.mtips5s-view-toggle button {
     padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    background-color: #0073aa;
+    color: #fff;
+    cursor: pointer;
     margin-right: 10px;
-    background-color: #f4f4f4;
-    border: 1px solid #ccc;
 }
 
-.mtips5s-toggle:hover {
-    background-color: #ddd;
+.mtips5s-view-toggle button.active {
+    background-color: #005177;
+}
+
+.mtips5s-view-toggle button:hover {
+    background-color: #005177;
+}
+
+/* Nút sắp xếp */
+.mtips5s-sort-buttons {
+    margin-bottom: 20px;
+}
+
+.mtips5s-sort-buttons a {
+    margin-right: 15px;
+    color: #0073aa;
+    text-decoration: none;
+}
+
+.mtips5s-sort-buttons a:hover {
+    text-decoration: underline;
+}
+
+
+.mtips5s-search-form input[name="search_query"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
 }

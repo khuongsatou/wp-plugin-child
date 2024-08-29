@@ -8,6 +8,7 @@ class Mtips5s {
 
     public function __construct() {
         $this->register_hooks();
+        $this->register_ajax_hooks();
     }
 
     private function register_hooks() {
@@ -30,6 +31,13 @@ class Mtips5s {
         add_filter('manage_edit-mtips5s_post_sortable_columns', array($this, 'sortable_columns'));
         add_action('pre_get_posts', array($this, 'sort_custom_columns'));
     }
+
+    private function register_ajax_hooks() {
+        add_action('wp_ajax_mtips5s_search', array($this, 'handle_ajax_search'));
+        add_action('wp_ajax_nopriv_mtips5s_search', array($this, 'handle_ajax_search'));
+    }
+
+    
 
     public function custom_post_type() {
         register_post_type('mtips5s_post', array(
@@ -60,6 +68,10 @@ class Mtips5s {
     public function enqueue_assets() {
         wp_enqueue_style('mtips5s-style', plugin_dir_url(__FILE__) . '../assets/css/style.css');
         wp_enqueue_script('mtips5s-script', plugin_dir_url(__FILE__) . '../assets/js/script.js', array('jquery'), null, true);
+
+        wp_localize_script('mtips5s-script', 'mtips5sAjax', array(
+            'ajax_url' => admin_url('admin-ajax.php')
+        ));
     }
 
     // Thêm meta box cho hạng sao, đánh giá, và giá
@@ -177,6 +189,7 @@ class Mtips5s {
         // Lấy các tham số từ URL nếu có
         $orderby = isset($_GET['orderby']) ? sanitize_text_field($_GET['orderby']) : $atts['orderby'];
         $order = isset($_GET['order']) ? strtoupper(sanitize_text_field($_GET['order'])) : $atts['order'];
+        $search_query = isset($_GET['search_query']) ? sanitize_text_field($_GET['search_query']) : '';
     
         // Xác định meta_key dựa trên giá trị của orderby
         $meta_key = '';
@@ -195,11 +208,19 @@ class Mtips5s {
             'meta_key'       => $meta_key,
             'orderby'        => $meta_key ? 'meta_value_num' : $orderby,
             'order'          => $order,
+            's'              => $search_query, // Thêm từ khóa tìm kiếm vào truy vấn
         );
     
         $query = new WP_Query($query_args);
     
         ob_start();
+    
+        // Thêm form tìm kiếm
+        echo '<div class="mtips5s-search-form">';
+        echo '<form id="mtips5s-search-form" method="get">';
+        echo '<input type="text" name="search_query" placeholder="' . esc_attr__('Search...', 'text-domain') . '" value="' . esc_attr($search_query) . '" />';
+        echo '</form>';
+        echo '</div>';
     
         // Thêm nút chuyển đổi chế độ hiển thị
         echo '<div class="mtips5s-view-toggle">';
@@ -209,11 +230,11 @@ class Mtips5s {
     
         // Thêm các nút sắp xếp
         echo '<div class="mtips5s-sort-buttons">';
-        echo '<a href="' . esc_url(add_query_arg(array('orderby' => 'star_rating', 'order' => ($order === 'ASC' ? 'DESC' : 'ASC')))) . '">' . __('Sort by Star Rating') . '</a>';
+        echo '<a href="' . esc_url(add_query_arg(array('orderby' => 'star_rating', 'order' => ($order === 'ASC' ? 'DESC' : 'ASC'), 'search_query' => $search_query))) . '">' . __('Sort by Star Rating') . '</a>';
         echo ' | ';
-        echo '<a href="' . esc_url(add_query_arg(array('orderby' => 'review_count', 'order' => ($order === 'ASC' ? 'DESC' : 'ASC')))) . '">' . __('Sort by Review Count') . '</a>';
+        echo '<a href="' . esc_url(add_query_arg(array('orderby' => 'review_count', 'order' => ($order === 'ASC' ? 'DESC' : 'ASC'), 'search_query' => $search_query))) . '">' . __('Sort by Review Count') . '</a>';
         echo ' | ';
-        echo '<a href="' . esc_url(add_query_arg(array('orderby' => 'price', 'order' => ($order === 'ASC' ? 'DESC' : 'ASC')))) . '">' . __('Sort by Price') . '</a>';
+        echo '<a href="' . esc_url(add_query_arg(array('orderby' => 'price', 'order' => ($order === 'ASC' ? 'DESC' : 'ASC'), 'search_query' => $search_query))) . '">' . __('Sort by Price') . '</a>';
         echo '</div>';
     
         if ($query->have_posts()) {
@@ -240,11 +261,133 @@ class Mtips5s {
             echo '</div>';
             wp_reset_postdata();
         } else {
-            echo '<p>No posts found.</p>';
+            echo '<p>' . __('No posts found.') . '</p>';
         }
     
         return ob_get_clean();
     }
+
+    public function handle_ajax_search() {
+        $atts = array(
+            'posts_per_page' => 5,
+            'view'           => 'list',
+            'orderby'        => isset($_GET['orderby']) ? sanitize_text_field($_GET['orderby']) : 'date',
+            'order'          => isset($_GET['order']) ? strtoupper(sanitize_text_field($_GET['order'])) : 'DESC',
+        );
+    
+        $search_query = isset($_GET['search_query']) ? sanitize_text_field($_GET['search_query']) : '';
+        $meta_query = array('relation' => 'OR');
+        if (!empty($search_query)) {
+            $meta_query[] = array(
+                'key'     => '_mtips5s_star_rating',
+                'value'   => $search_query,
+                'compare' => 'LIKE',
+                'type'    => 'NUMERIC'
+            );
+        }
+
+        echo '<pre>'; print_r($meta_query); echo '</pre>';
+
+    
+        if (!empty($search_query)) {
+            $meta_query[] = array(
+                'key'     => '_mtips5s_review_count',
+                'value'   => $search_query,
+                'compare' => 'LIKE',
+                'type'    => 'NUMERIC'
+            );
+        }
+    
+        if (!empty($search_query)) {
+            $meta_query[] = array(
+                'key'     => '_mtips5s_price',
+                'value'   => $search_query,
+                'compare' => 'LIKE',
+                'type'    => 'NUMERIC'
+            );
+        }
+    
+        $meta_key = '';
+        if ($atts['orderby'] === 'star_rating') {
+            $meta_key = '_mtips5s_star_rating';
+        } elseif ($atts['orderby'] === 'review_count') {
+            $meta_key = '_mtips5s_review_count';
+        } elseif ($atts['orderby'] === 'price') {
+            $meta_key = '_mtips5s_price';
+        }
+
+        // Tạo một hàm tùy chỉnh để thay đổi điều kiện WHERE của truy vấn
+        add_filter('posts_where', function($where) use ($search_query) {
+            if (!empty($search_query)) {
+                global $wpdb;
+                $where .= $wpdb->prepare(" OR {$wpdb->posts}.post_title LIKE %s", '%' . $wpdb->esc_like($search_query) . '%');
+            }
+            // Thêm điều kiện post_type vào WHERE
+            $where .= $wpdb->prepare(" AND {$wpdb->posts}.post_type = %s", 'mtips5s_post');
+            return $where;
+        });
+        
+        $query_args = array(
+            'post_type'      => 'mtips5s_post',
+            'posts_per_page' => $atts['posts_per_page'],
+            'meta_key'       => $meta_key,
+            'orderby'        => $meta_key ? 'meta_value_num' : $atts['orderby'],
+            'order'          => $atts['order'],
+            // 's'              => $search_query,
+            'meta_query'     => $meta_query
+        );
+    
+        $query = new WP_Query($query_args);
+        // echo '<pre>'; print_r($query ); echo '</pre>';
+
+        // Loại bỏ filter sau khi sử dụng để không ảnh hưởng đến các truy vấn khác
+        remove_filter('posts_where', function($where) use ($search_query) {
+            if (!empty($search_query)) {
+                global $wpdb;
+                $where .= $wpdb->prepare(" OR {$wpdb->posts}.post_title LIKE %s", '%' . $wpdb->esc_like($search_query) . '%');
+            }
+            // Thêm điều kiện post_type vào WHERE
+            $where .= $wpdb->prepare(" AND {$wpdb->posts}.post_type = %s", 'mtips5s_post');
+            return $where;
+        });
+
+
+        ob_start();
+    
+        if ($query->have_posts()) {
+            echo '<div class="mtips5s-posts mtips5s-' . esc_attr($atts['view']) . '-view">';
+            while ($query->have_posts()) {
+                $query->the_post();
+    
+                $star_rating = get_post_meta(get_the_ID(), '_mtips5s_star_rating', true);
+                $review_count = get_post_meta(get_the_ID(), '_mtips5s_review_count', true);
+                $price = get_post_meta(get_the_ID(), '_mtips5s_price', true);
+    
+                echo '<div class="mtips5s-post-item">';
+                echo '<a href="' . get_permalink() . '">';
+                if (has_post_thumbnail()) {
+                    echo get_the_post_thumbnail(get_the_ID(), 'medium');
+                }
+                echo '<h2>' . get_the_title() . '</h2>';
+                echo '</a>';
+                echo '<p>' . __('Star Rating: ') . esc_html($star_rating) . '</p>';
+                echo '<p>' . __('Review Count: ') . esc_html($review_count) . '</p>';
+                echo '<p>' . __('Price: $') . esc_html($price) . '</p>';
+                echo '</div>';
+            }
+            echo '</div>';
+        } else {
+            echo '<p>' . __('No posts found.') . '</p>';
+        }
+    
+        wp_reset_postdata();
+        echo ob_get_clean();
+        wp_die();
+    }
+    
+    
+    
+    
     
     
     
